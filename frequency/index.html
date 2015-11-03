@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 10px sans-serif;
+}
+
+.arc path {
+  stroke: #fff;
+}
+
+</style>
+<body>
+<script src="../lib/d3.js" charset="utf-8"></script>
+<script>
+
+var ptData = ["Normal", "N43738", "N43941", "N40594", "N40702", "N44412", "N41492" ,"N42559"]
+
+var width = 600,
+    height = 600,
+    radius = Math.min(width, height) / 4;
+
+var color = d3.scale.sqrt()
+      .domain([0,1])
+      .interpolate(d3.interpolateLab)
+      .range(["white", "blue"]);
+
+var z = d3.scale.linear()
+      .domain([0,1])
+      .interpolate(d3.interpolateLab)
+      .range(["white", "grey"]);
+
+var nos = d3.scale.linear()
+      .domain([0,1])
+      .interpolate(d3.interpolateLab)
+      .range(["white", "red"]);
+
+var alpha = function(_) {
+
+}
+
+
+var arcOut = d3.svg.arc()
+    .outerRadius(40)
+    .innerRadius(60);
+
+var arc = d3.svg.arc()
+    .outerRadius(74)
+    .innerRadius(64);
+
+var arc3 = d3.svg.arc()
+    .outerRadius(62)
+    .innerRadius(42);
+
+var arc4 = d3.svg.arc()
+    .outerRadius(86)
+    .innerRadius(76);
+
+var arc5 = d3.svg.arc()
+    .outerRadius(98)
+    .innerRadius(88);
+
+var arc6 = d3.svg.arc()
+    .outerRadius(110)
+    .innerRadius(100);
+
+var arc7 = d3.svg.arc()
+    .outerRadius(122)
+    .innerRadius(112);
+
+var arc8 = d3.svg.arc()
+    .outerRadius(134)
+    .innerRadius(124);
+
+var arc9 = d3.svg.arc()
+    .outerRadius(146)
+    .innerRadius(136);
+
+var pie = d3.layout.pie()
+  .value(function(d) {
+    return 1; })
+  .padAngle(.01)
+  .sort(null);
+
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+  .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+
+d3.csv("data/hrvrange_norm.csv", function(error, data) {
+
+  data.forEach(function(d) {
+    d.Range = +d.Range;
+    d.Frequency = +d.Frequency;
+  });
+
+  var g = svg.selectAll(".arc3")
+      .data(pie(data))
+    .enter().append("g")
+      .attr("class", "arc3");
+
+  g.append("path")
+      .attr("id", function(d,i) { return "rangeArc_"+i; })
+      .attr("d", arc3)
+      .style("stroke", "grey")
+      .style("stroke-width", "0.05")
+      .style("fill", function(d) {
+        return color(d.data.Frequency / 4);
+      });
+
+  g.append("text")
+      .attr("transform", function(d) {
+        return "translate(" + (arc3.centroid(d)) + ")";
+      })
+      .attr("dy", ".5em")
+      .style("text-anchor", "middle")
+      .style("font-size", "6px")
+      .text(function(d,i) { if(i%5===0) return d.data.Range; });
+
+});
+
+d3.csv("data/HRV_N43738_1.csv", function(error, data) {
+
+  data.forEach(function(d) {
+
+    d.Range = +d.Range;
+    d.Frequency = +d.Frequency;
+  });
+
+  var g = svg.selectAll(".N43738")
+      .data(pie(data))
+    .enter().append("g")
+      .attr("class", "N43738");
+
+  g.append("path")
+      .attr("d", arc)
+      .style("stroke", "grey")
+      .style("stroke-width", "0.05")
+      .style("fill", function(d) {
+
+        return z(d.data.Frequency);
+
+      })
+      .style('opacity', 0.9);
+
+  g.append("text")
+      .attr("transform", function(d) {
+        return "translate(" + (arc.centroid(d)) + ")";
+      })
+      .attr("dy", ".5em")
+      .style("text-anchor", "middle")
+      .style("font-size", "6px")
+      .text(function(d,i) { if(i%0===0) return d.data.Range; });
+
+});
+
+d3.csv("data/hrvnorm_N43941_2.csv", function(error, data) {
+
+  data.forEach(function(d) {
+
+    d.Range = +d.Range;
+    d.Frequency = +d.Frequency;
+  });
+
+  var g = svg.selectAll(".arc4")
+      .data(pie(data))
+    .enter().append("g")
+      .attr("class", "arc4");
+
+  g.append("path")
+      .attr("d", arc4)
+            .style("stroke", "grey")
+      .style("stroke-width", "0.05")
+      .style("fill", function(d) {
+        return z(d.data.Frequency);
+      })
+      .style('opacity', 0.9);
+
+  g.append("text")
+      .attr("transform", function(d) {
+        return "translate(" + (arc4.centroid(d)) + ")";
+      })
+      .attr("dy", ".5em")
+      .style("text-anchor", "middle")
+      .text(function(d,i) { if(i%0===0) return d.data.Range; });
+
+});
+
+d3.csv("data/hrvnorm_N40594_1.csv", function(error, data) {
+
+  data.forEach(function(d) {
+
+    d.Range = +d.Range;
+    d.Frequency = +d.Frequency;
+  });
+
+  var g = svg.selectAll(".arc5")
+      .data(pie(data))
+    .enter().append("g")
+      .attr("class", "arc5");
+
+  g.append("path")
+      .attr("d", arc5)
+            .style("stroke", "grey")
+      .style("stroke-width", "0.05")
+      .style("fill", function(d) {
+        return z(d.data.Frequency);
+      })
+      .style('opacity', 0.9);
+
+  g.append("text")
+      .attr("transform", function(d) {
+        return "translate(" + (arc5.centroid(d)) + ")";
+      })
+      .attr("dy", ".5em")
+      .style("text-anchor", "middle")
+      .text(function(d,i) { if(i%0===0) return d.data.Range; });
+
+});
+
+d3.csv("data/hrvnorm_N40702_2.csv", function(error, data) {
+
+  data.forEach(function(d) {
+
+    d.Range = +d.Range;
+    d.Frequency = +d.Frequency;
+  });
+
+  var g = svg.selectAll(".arc6")
+      .data(pie(data))
+    .enter().append("g")
+      .attr("class", "arc6");
+
+  g.append("path")
+      .attr("d", arc6)
+            .style("stroke", "grey")
+      .style("stroke-width", "0.05")
+      .style("fill", function(d) {
+        return nos(d.data.Frequency);
+      })
+      .style('opacity', 0.9);
+
+  g.append("text")
+      .attr("transform", function(d) {
+        return "translate(" + (arc6.centroid(d)) + ")";
+      })
+      .attr("dy", ".5em")
+      .style("text-anchor", "middle")
+      .text(function(d,i) { if(i%0===0) return d.data.Range; });
+
+});
+
+d3.csv("data/hrvnorm_N44412_1.csv", function(error, data) {
+
+  data.forEach(function(d) {
+
+    d.Range = +d.Range;
+    d.Frequency = +d.Frequency;
+  });
+
+  var g = svg.selectAll(".arc7")
+      .data(pie(data))
+    .enter().append("g")
+      .attr("class", "arc7");
+
+  g.append("path")
+      .attr("d", arc7)
+            .style("stroke", "grey")
+      .style("stroke-width", "0.05")
+      .style("fill", function(d) {
+        return nos(d.data.Frequency);
+      })
+      .style('opacity', 0.9);
+
+  g.append("text")
+      .attr("transform", function(d) {
+        return "translate(" + (arc7.centroid(d)) + ")";
+      })
+      .attr("dy", ".5em")
+      .style("text-anchor", "middle")
+      .text(function(d,i) { if(i%0===0) return d.data.Range; });
+
+});
+
+d3.csv("data/hrvnorm_N41492_3.csv", function(error, data) {
+
+  data.forEach(function(d) {
+
+    d.Range = +d.Range;
+    d.Frequency = +d.Frequency;
+  });
+
+  var g = svg.selectAll(".arc8")
+      .data(pie(data))
+    .enter().append("g")
+      .attr("class", "arc8");
+
+  g.append("path")
+      .attr("d", arc8)
+            .style("stroke", "grey")
+      .style("stroke-width", "0.05")
+      .style("fill", function(d) {
+        return nos(d.data.Frequency);
+      })
+      .style('opacity', 0.9);
+
+  g.append("text")
+      .attr("transform", function(d) {
+        return "translate(" + (arc8.centroid(d)) + ")";
+      })
+      .attr("dy", ".5em")
+      .style("text-anchor", "middle")
+      .text(function(d,i) { if(i%0===0) return d.data.Range; });
+
+  var text = "N41492"
+
+    g.append("text")
+        .attr("dy", ".4em")
+        .attr("transform", function(d,i) { if (i != 0 && i % 30 === 0) {
+        return "translate(" + (arc8.centroid(d)) + ")";
+      } else { return null};
+      })
+        .text(function(d,i){
+
+          if (i != 0 && i % 30 === 0) {
+                              return text;
+                            } else { return null };
+
+        })
+        .style("font-size", "6px");
+
+});
+
+d3.csv("data/hrvnorm_N42559_1.csv", function(error, data) {
+
+  data.forEach(function(d) {
+
+    d.Range = +d.Range;
+    d.Frequency = +d.Frequency;
+  });
+
+  var g = svg.selectAll(".arc9")
+      .data(pie(data))
+    .enter().append("g")
+      .attr("class", "arc9");
+
+  g.append("path")
+      .attr("id", function(d,i) { return "rangeArc9_"+i; })
+      .attr("d", arc9)
+            .style("stroke", "grey")
+      .style("stroke-width", "0.05")
+      .style("fill", function(d) {
+        return nos(d.data.Frequency);
+      })
+      .style('opacity', 0.9);
+
+  g.append("text")
+      .attr("transform", function(d) {
+        return "translate(" + (arc9.centroid(d)) + ")";
+      })
+      .attr("dy", ".5em")
+      .style("text-anchor", "middle")
+      .text(function(d,i) { if(i%0===0) return d.data.Range; });
+
+   // g.append("text")
+   //    .attr("transform", function(d,i) { if (i != 0 && i % 30 === 0) {
+   //      return "translate(" + (arc9.centroid(d)) + ")";
+   //    } else { return null};
+   //    })
+   //    .attr("dy", ".5em")
+   //    .style("text-anchor", "middle")
+   //    .append("textPath")
+   //    .attr("xlink:href",function(d,i){return "#rangeArc9_"+i;})
+   //    .text(function(d,i) { if (i != 0 && i % 30 === 0) {
+   //                            return "N42559";
+   //                          } else { return null;}
+   //      })
+   //    .style("font-size", "6px");
+   //
+
+   var text = "N42559"
+
+    g.append("text")
+        .attr("class", "patientName")
+        .attr("dy", ".4em")
+        .attr("transform", function(d,i) { if (i != 0 && i % 30 === 0) {
+        return "translate(" + (arc9.centroid(d)) + ")";
+      } else { return null};
+      })
+        .text(function(d,i){
+
+          if (i != 0 && i % 30 === 0) {
+                              return text;
+                            } else { return null };
+
+        })
+        .style("font-size", "6px");
+
+});
+
+d3.csv("data/hrvnorm_N40594_1.csv", function(error, data) {
+
+  data.forEach(function(d) {
+
+    d.Range = +d.Range;
+    d.Frequency = +d.Frequency;
+  });
+
+  var g = svg.selectAll(".arc5")
+      .data(pie(data))
+    .enter().append("g")
+      .attr("class", "arc5");
+
+  g.append("path")
+      .attr("d", arc5)
+            .style("stroke", "grey")
+      .style("stroke-width", "0.05")
+      .style("fill", function(d) {
+        return z(d.data.Frequency);
+      })
+      .style('opacity', 0.9);
+
+  g.append("text")
+      .attr("transform", function(d) {
+        return "translate(" + (arc5.centroid(d)) + ")";
+      })
+      .attr("dy", ".5em")
+      .style("text-anchor", "middle")
+      .text(function(d,i) { if(i%0===0) return d.data.Range; });
+
+});
+
+
+
+</script>

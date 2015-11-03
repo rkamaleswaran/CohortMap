@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 12px sans-serif;
+}
+
+.arc path {
+  stroke: #fff;
+}
+
+.mytooltip {
+  position:absolute;
+  text-align: center;
+  width: 100px;
+  height:auto;
+  background-color: #EDE3D1;
+  border-radius: 10px;
+  color: #787777;
+  padding: 6px 12px;
+  z-index:3;
+}
+
+.mytooltip:after {
+  box-sizing: border-box;
+  display: inline;
+  width: 100%;
+  line-height: 1;
+  color: #EDE3D1;
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+  margin: -3px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+
+.mycurve span {
+    display: block;
+    text-align: center;
+    width: 100px;
+    height: auto;
+    margin: 5px auto;
+  }
+
+.mycurve {
+  position:absolute;
+  text-align: center;
+  width: 100px;
+  height:auto;
+  background-color: #EDE3D1;
+  border-radius: 10px;
+  color: #787777;
+  padding: 6px 12px;
+  z-index:3;
+}
+
+.mycurve:after {
+  box-sizing: border-box;
+  display: inline;
+  width: 100%;
+  line-height: 1;
+  color: #EDE3D1;
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+  margin: -3px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+
+.mytooltip.mycurve span {
+    display: block;
+    text-align: center;
+    width: 100px;
+    height: auto;
+    margin: 5px auto;
+  }
+
+
+#thumbnail {
+    width: 100px;
+    height: auto;
+    margin: 0 auto;
+    color: #787777;
+    text-align: center;
+  }
+
+</style>
+<body>
+<script src="../lib/d3.js" charset="utf-8"></script>
+<script src="../lib/math.gaussian.js"></script>
+
+<script>
+
+var ptData = ["Normal", "N43738", "N43941", "N40594", "N40702", "N44412", "N41492" ,"N42559"]
+
+var width = 800,
+    height = 800,
+    arcWidth = 20,
+    arcPad = 4,
+    arcMin = 40,
+    radius = Math.min(width, height) / 4;
+
+var color = d3.scale.linear()
+      .domain([0,1])
+      .interpolate(d3.interpolateLab)
+      .range(["white", "blue"]);
+
+var z = d3.scale.linear()
+      .domain([0,1])
+      .interpolate(d3.interpolateLab)
+      .range(["white", "grey"]);
+
+var nos = d3.scale.linear()
+      .domain([0,1])
+      .interpolate(d3.interpolateLab)
+      .range(["white", "red"]);
+
+ var myTool = d3.select("body")
+                  .append("div")
+                  .attr("class", "mytooltip")
+                  .style("opacity", "0")
+                  .style("display", "none");
+
+var myCurve = d3.select("body")
+                  .append("div")
+                  .attr("class", "mycurve")
+                  .style("opacity", "0")
+                  .style("display", "none");
+
+
+var arc = d3.svg.arc();
+
+ var drawArc = d3.svg.arc()
+      .innerRadius(function(d, i) {
+        return  arcMin + i*(arcWidth) + arcPad;
+      })
+      .outerRadius(function(d, i) {
+        return arcMin + (i+1)*(arcWidth);
+      });
+
+var pie = d3.layout.pie()
+  .value(function(d) {
+    return 1; })
+  .padAngle(.01)
+  .sort(null);
+
+  var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+  .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+
+d3.csv("data.csv", function(error, data) {
+
+  var normf;
+  var pat = [], inst, s;
+
+
+  data.forEach(function(d,i) {
+    normf = Math.getGaussianFunction(+d.mean, +d.stdv, 1);
+    d.values = [];
+    d.peakIndex;
+    for (j=0; j<60; j++) {
+      normals = normf(j);  // Full value for the histograms
+      value = normf(j);    // Partial values for the rings
+      if (d.patient === 'Text' || value < 0.75) {
+        value = 0;
+      } else if (d.patient != 'Text' && value > 0.99) {
+        d.peakIndex = j;
+      } else {
+        value = (value - 0.75) / 0.25;
+      }
+    d.values[j] = {x:j, y: value, infection: +d.infection, patient: d.patient, sample: d.sample};
+
+  }
+
+ })
+
+  var g = svg.selectAll("g")
+    .data(data.sort(function(a,b) {return +a.infection - +b.infection;} ))
+    .enter()
+    .append("g");
+
+  var path = g.selectAll("path")
+      .data(function(d) {
+        return pie(d.values); })
+      .enter()
+      .append("path")
+      .style("stroke", "grey")
+      .style("stroke-width", "0.05")
+     .attr("fill", function(d, i) {
+
+          if (d.data.infection === 0 && d.data.patient === "Origin") {
+          return "white";
+        } else if (d.data.infection === 0 && d.data.patient != "Population") {
+          return z(d.data.y);
+        } else if (d.data.infection === 1 && d.data.patient != "Population") {
+            return nos(d.data.y);
+          } else {
+            return color(d.data.y);
+          }
+
+        })
+      .attr("d", function(d, i, j) {
+        return arc.innerRadius(arcMin + j*(arcWidth) + arcPad).outerRadius(arcMin + (j+1)*(arcWidth))(d);
+     })
+      .on("mouseover", function(d) {
+                d3.select(this)
+                    .transition()
+                    .duration(100)
+                    .style("cursor", "pointer")
+                    myTool
+              .transition()  // Opacity transition when the tooltip appears
+              .duration(500)
+              .style("opacity", "1")
+              .style("display", "block")  // The tooltip appears
+
+              myTool
+                .html("<div id='thumbnail'><span>Patient: " + d.data.patient  +
+                  " <br /> N: " + +d.data.sample +" </span></div>")
+                .style("left", (d3.event.pageX - 65) + "px")
+                .style("top", (d3.event.pageY - 70) + "px")
+
+      })
+      .on("mouseout", function(d){  // Mouse event
+            d3.select(this)
+                .transition()
+                .duration(200)
+                .style("cursor", "normal")
+                myTool
+                    .transition()  // Opacity transition when the tooltip disappears
+                .duration(200)
+                .style("opacity", "0")
+                .style("display", "none")  // The tooltip disappears
+      })
+      .on("mousedown", function(d,i,j) {
+              d3.select(this)
+                    .transition()
+                    .duration(100)
+                    .style("cursor", "pointer")
+                    myCurve
+              .transition()  // Opacity transition when the tooltip appears
+              .duration(500)
+              .style("opacity", "1")
+              .style("display", "block")  // The tooltip appears
+
+              myCurve
+                .html("<div id='chart'></div>")
+                .style("left", (d3.event.pageX - 165) + "px")
+                .style("top", (d3.event.pageY - 170) + "px");
+
+             drawNormChart(d);
+
+      })
+
+
+
+
+      ;
+
+
+   g.append("text")
+    .attr("transform", function(d) { return "translate(" +
+      arc.centroid(d) + ")"; })
+    .attr("dy", ".35em")
+    .attr("text-anchor", "middle")
+    .text(function(d) { return d.value; });
+
+    function drawNormChart(d) {
+        var margin = {top: 20, right: 20, bottom: 30, left: 50},
+        width = 960 - margin.left - margin.right,
+        height = 500 - margin.top - margin.bottom;
+
+        var parseDate = d3.time.format("%d-%b-%y").parse;
+
+        range = 60;
+
+        var color = d3.scale.category10();
+
+        var x = d3.scale.linear()
+            .range([0, width]);
+
+        var y = d3.scale.linear()
+            .range([height, 0]);
+
+        var xAxis = d3.svg.axis()
+            .scale(x)
+            .orient("bottom");
+
+        var yAxis = d3.svg.axis()
+            .scale(y)
+            .orient("left");
+
+        var line = d3.svg.line()
+          .interpolate("basis")
+          .x(function(d) {
+            return x(d.x);
+          })
+            .y(function(d) {
+              return y(d.y);
+            });
+
+        var svg = d3.select("body").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+          if (error) throw error;
+
+          var normf;
+          var pat = [], inst, s;
+
+
+          data.forEach(function(d,i) {
+            normf = Math.getGaussianFunction(+d.mean, +d.stdv, 1);
+            d.values = [];
+            d.peakIndex;
+            for (j=0; j<range+1; j++) {
+              value = normf(j);
+              if (value < 0.001) {
+                value = 0;
+              } else if (value > 0.99) {
+                d.peakIndex = j;
+              }
+
+            d.values[j] = {x:j, y: value};
+
+          }
+
+         })
+
+          x.domain([0,60]);
+          y.domain([0,1]);
+
+          svg.append("g")
+              .attr("class", "x axis")
+              .attr("transform", "translate(0," + height + ")")
+              .call(xAxis);
+
+          svg.append("g")
+              .attr("class", "y axis")
+              .call(yAxis)
+            .append("text")
+              .attr("transform", "rotate(-90)")
+              .attr("y", 6)
+              .attr("dy", ".71em")
+              .style("text-anchor", "end")
+              .text("P(X)");
+
+        var guassLines = svg.selectAll(".norm")
+              .data(data)
+            .enter().append("g")
+              .attr("class", "norm");
+
+          guassLines.append("path")
+            .attr("class", "line")
+            .attr("d", function(d){ return line(d.values); })
+            .style("stroke", function(d) { return color(d.patient); });
+
+        guassLines.append("text")
+              .datum(function(d) { return {name: d.patient, value: d.values[
+                  d.peakIndex
+                ]
+            }; })
+              .attr("transform", function(d) {
+                return "translate(" + (x(d.value.x) ) + "," + (y(d.value.y)) + ")";
+              })
+              .attr("x", 3)
+              .attr("dy", ".35em")
+              .text(function(d) { return "Mean: (" + d.value.x + "," + 1+ ")"; });
+
+          guassLines.append("text")
+              .datum(function(d) { return {name: d.patient, value: d.values[
+                  d.peakIndex
+                ]
+            }; })
+              .attr("transform", function(d) {
+                return "translate(" + (x(d.value.x) - 30) + "," + (y(d.value.y) + 20) + ")";
+              })
+              .attr("x", 3)
+              .attr("dy", ".35em")
+              .text(function(d) { return d.name; });
+    } // end drawNormChart function
+
+});
+
+
+</script>
