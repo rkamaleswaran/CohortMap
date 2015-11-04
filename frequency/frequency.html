@@ -10,6 +10,23 @@ body {
   stroke: #fff;
 }
 
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  display: none;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 3.5px;
+}
+
 .mytooltip {
   position:absolute;
   text-align: center;
@@ -47,7 +64,7 @@ body {
 .mycurve {
   position:absolute;
   text-align: center;
-  width: 100px;
+  width: 400px;
   height:auto;
   background-color: #EDE3D1;
   border-radius: 10px;
@@ -86,6 +103,12 @@ body {
     color: #787777;
     text-align: center;
   }
+
+.legend {
+    font-size: 14px;
+    font-weight: bold;
+    text-anchor: middle;
+}
 
 </style>
 <body>
@@ -174,7 +197,7 @@ d3.csv("data.csv", function(error, data) {
       } else {
         value = (value - 0.75) / 0.25;
       }
-    d.values[j] = {x:j, y: value, infection: +d.infection, patient: d.patient, sample: d.sample};
+    d.values[j] = {x:j, y: value, instance: +d.instance, infection: +d.infection, patient: d.patient, sample: d.sample};
 
   }
 
@@ -236,13 +259,15 @@ d3.csv("data.csv", function(error, data) {
                 .duration(200)
                 .style("opacity", "0")
                 .style("display", "none")  // The tooltip disappears
+
       })
       .on("mousedown", function(d,i,j) {
               d3.select(this)
                     .transition()
                     .duration(100)
                     .style("cursor", "pointer")
-                    myCurve
+
+              myCurve
               .transition()  // Opacity transition when the tooltip appears
               .duration(500)
               .style("opacity", "1")
@@ -255,6 +280,13 @@ d3.csv("data.csv", function(error, data) {
 
              drawNormChart(d);
 
+      })
+      .on("mouseover.go", function(d) {
+        myCurve
+                    .transition()  // Opacity transition when the tooltip disappears
+                .duration(200)
+                .style("opacity", "0")
+                .style("display", "none")  // The tooltip disappears
       })
 
 
@@ -270,12 +302,28 @@ d3.csv("data.csv", function(error, data) {
     .attr("text-anchor", "middle")
     .text(function(d) { return d.value; });
 
-    function drawNormChart(d) {
-        var margin = {top: 20, right: 20, bottom: 30, left: 50},
-        width = 960 - margin.left - margin.right,
-        height = 500 - margin.top - margin.bottom;
+function drawNormChart(d) {
 
-        var parseDate = d3.time.format("%d-%b-%y").parse;
+        dataset = d;
+        var newData = [];
+
+                    for (i in data) {
+
+                      if (data[i].patient === "Population") {
+                           newData[0] = data[i];
+                         }
+
+                      if (data[i].patient === dataset.data.patient && +data[i].instance === dataset.data.instance)
+                        {
+                          newData[1] = data[i];
+                        }
+                    }
+
+        var margin = {top: 20, right: 20, bottom: 40, left: 50},
+        width = 360 - margin.left - margin.right,
+        height = 150 - margin.top - margin.bottom;
+
+
 
         range = 60;
 
@@ -293,7 +341,8 @@ d3.csv("data.csv", function(error, data) {
 
         var yAxis = d3.svg.axis()
             .scale(y)
-            .orient("left");
+            .orient("left")
+            .ticks(2);
 
         var line = d3.svg.line()
           .interpolate("basis")
@@ -304,87 +353,78 @@ d3.csv("data.csv", function(error, data) {
               return y(d.y);
             });
 
-        var svg = d3.select("body").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-          .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        if (d3.select(".svgChart").empty() === true) {
 
-          if (error) throw error;
+          var svg = d3.select("#chart").append("svg").attr("class", "svgChart")
+              .attr("width", width + margin.left + margin.right)
+              .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+              .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-          var normf;
-          var pat = [], inst, s;
+            if (error) throw error;
+
+            legendSpace = width/newData.length; // spacing for legend
+
+            x.domain([0,60]);
+            y.domain([0,1]);
+
+            svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + height + ")")
+                .call(xAxis);
+
+            svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis)
+              .append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 6)
+                .attr("dy", ".71em")
+                .style("text-anchor", "end")
+                .text("P(X)");
+
+                var guassLines = svg.selectAll(".norm")
+                .data(newData)
+              .enter().append("g")
+                .attr("class", "norm");
+
+              guassLines.append("path")
+                .attr("class", "line")
+                .attr("d", function(d){
+                  return line(d.values); })
+                .style("stroke", function(d) { return color(d.patient); });
 
 
-          data.forEach(function(d,i) {
-            normf = Math.getGaussianFunction(+d.mean, +d.stdv, 1);
-            d.values = [];
-            d.peakIndex;
-            for (j=0; j<range+1; j++) {
-              value = normf(j);
-              if (value < 0.001) {
-                value = 0;
-              } else if (value > 0.99) {
-                d.peakIndex = j;
-              }
+                guassLines.append("text")
+                    .datum(function(d) { return {name: d.patient, value: d.values[
+                        d.peakIndex
+                      ]
+                  }; })
+                    .attr("transform", function(d,i) {
+                      return "translate(" + ((legendSpace/2)+i*legendSpace-20) + "," + (y(d.value.y) + 120) + ")";
+                    })
+                    .attr("class", "legend")
+                    .attr("x", 3)
+                    .attr("dy", ".35em")
+                    .attr("fill", function(d){ return color(d.name); })
+                    .text(function(d) { return " — " + d.name + " (" + d.value.x + ")"; });
 
-            d.values[j] = {x:j, y: value};
+          } else {
+            var svg = d3.select("#svgChart").transition();
 
+            svg.select(".line")   // change the line
+                .duration(750)
+                .attr("d", function(d){ return line(d.values); });
+
+            svg.select(".x.axis") // change the x axis
+                .duration(750)
+                .call(xAxis);
+            svg.select(".y.axis") // change the y axis
+                .duration(750)
+                .call(yAxis);
           }
 
-         })
 
-          x.domain([0,60]);
-          y.domain([0,1]);
-
-          svg.append("g")
-              .attr("class", "x axis")
-              .attr("transform", "translate(0," + height + ")")
-              .call(xAxis);
-
-          svg.append("g")
-              .attr("class", "y axis")
-              .call(yAxis)
-            .append("text")
-              .attr("transform", "rotate(-90)")
-              .attr("y", 6)
-              .attr("dy", ".71em")
-              .style("text-anchor", "end")
-              .text("P(X)");
-
-        var guassLines = svg.selectAll(".norm")
-              .data(data)
-            .enter().append("g")
-              .attr("class", "norm");
-
-          guassLines.append("path")
-            .attr("class", "line")
-            .attr("d", function(d){ return line(d.values); })
-            .style("stroke", function(d) { return color(d.patient); });
-
-        guassLines.append("text")
-              .datum(function(d) { return {name: d.patient, value: d.values[
-                  d.peakIndex
-                ]
-            }; })
-              .attr("transform", function(d) {
-                return "translate(" + (x(d.value.x) ) + "," + (y(d.value.y)) + ")";
-              })
-              .attr("x", 3)
-              .attr("dy", ".35em")
-              .text(function(d) { return "Mean: (" + d.value.x + "," + 1+ ")"; });
-
-          guassLines.append("text")
-              .datum(function(d) { return {name: d.patient, value: d.values[
-                  d.peakIndex
-                ]
-            }; })
-              .attr("transform", function(d) {
-                return "translate(" + (x(d.value.x) - 30) + "," + (y(d.value.y) + 20) + ")";
-              })
-              .attr("x", 3)
-              .attr("dy", ".35em")
-              .text(function(d) { return d.name; });
     } // end drawNormChart function
 
 });
